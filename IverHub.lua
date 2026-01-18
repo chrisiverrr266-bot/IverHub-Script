@@ -231,7 +231,7 @@ local function isVisible(targetPart)
     local origin = Camera.CFrame.Position
     local direction = (targetPart.Position - origin)
     local ray = Ray.new(origin, direction)
-    local hit, pos = Workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character, Camera})
+    local hit = Workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character, Camera})
     return hit and hit:IsDescendantOf(targetPart.Parent)
 end
 
@@ -454,7 +454,7 @@ if getrawmetatable and hookmetamethod then
         local method = getnamecallmethod()
 
         if IverHub.Settings.SilentAim and not checkcaller() then
-            if method == "FireServer" or method == "InvokeServer" or method == "Fire" then
+            if method == "FireServer" or method == "InvokeServer" then
                 local target = getClosestPlayer()
                 if target and target.Character then
                     local part = target.Character:FindFirstChild(IverHub.Settings.TargetPart) or target.Character:FindFirstChild("HumanoidRootPart")
