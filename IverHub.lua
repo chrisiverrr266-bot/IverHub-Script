@@ -449,38 +449,30 @@ end
 -- Hook for Silent Aim
 if getrawmetatable and hookmetamethod then
     local old
-    old = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
-        local args = {...}
-        local method = getnamecallmethod()
-
+    old = hookmetamethod(game, "__index", newcclosure(function(self, key)
         if IverHub.Settings.SilentAim and not checkcaller() then
-            if method == "FireServer" or method == "InvokeServer" then
-                local target = getClosestPlayer()
-                if target and target.Character then
-                    local part = target.Character:FindFirstChild(IverHub.Settings.TargetPart) or target.Character:FindFirstChild("HumanoidRootPart")
-                    if part then
-                        local pos = part.Position
+            local target = getClosestPlayer()
+            if target and target.Character then
+                local part = target.Character:FindFirstChild(IverHub.Settings.TargetPart) or target.Character:FindFirstChild("HumanoidRootPart")
+                if part then
+                    local pos = part.Position
 
-                        if IverHub.Settings.PredictMovement then
-                            local velocity = part.AssemblyLinearVelocity or part.Velocity or Vector3.zero
-                            pos = pos + (velocity * IverHub.Settings.PredictionStrength)
-                        end
+                    if IverHub.Settings.PredictMovement then
+                        local velocity = part.AssemblyLinearVelocity or part.Velocity or Vector3.zero
+                        pos = pos + (velocity * IverHub.Settings.PredictionStrength)
+                    end
 
-                        for i, v in pairs(args) do
-                            if typeof(v) == "Vector3" then
-                                args[i] = pos
-                            elseif typeof(v) == "CFrame" then
-                                args[i] = CFrame.new(pos)
-                            elseif typeof(v) == "Instance" and v:IsA("BasePart") then
-                                args[i] = part
-                            end
+                    if self == Mouse then
+                        if key == "Hit" then
+                            return CFrame.new(pos)
+                        elseif key == "Target" then
+                            return part
                         end
                     end
                 end
             end
         end
-
-        return old(self, unpack(args))
+        return old(self, key)
     end))
 end
 
