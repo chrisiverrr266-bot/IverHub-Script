@@ -1,5 +1,5 @@
--- Iver Hub ESP + Silent Aim v6.0 - FULLY WORKING
--- Fixed: All features now working properly
+-- Iver Hub ESP + Silent Aim v6.1 - FULLY WORKING
+-- Enhanced: Dual hook system for maximum compatibility
 
 -- Protection wrapper
 local function protectFunction(func)
@@ -148,7 +148,7 @@ local function createGUI()
     local Title = Instance.new("TextLabel")
     Title.Size = UDim2.new(1, 0, 1, 0)
     Title.BackgroundTransparency = 1
-    Title.Text = "⚡ IVER HUB v6.0"
+    Title.Text = "⚡ IVER HUB v6.1"
     Title.TextColor3 = Color3.fromRGB(255, 255, 255)
     Title.Font = Enum.Font.GothamBold
     Title.TextSize = 20
@@ -446,10 +446,11 @@ local function getClosestPlayer()
     return closest
 end
 
--- Hook for Silent Aim
+-- Hook for Silent Aim (Dual Hook System)
 if getrawmetatable and hookmetamethod then
-    local old
-    old = hookmetamethod(game, "__index", newcclosure(function(self, key)
+    -- Hook 1: __index for Mouse.Hit and Mouse.Target
+    local oldIndex
+    oldIndex = hookmetamethod(game, "__index", newcclosure(function(self, key)
         if IverHub.Settings.SilentAim and not checkcaller() then
             local target = getClosestPlayer()
             if target and target.Character then
@@ -472,7 +473,43 @@ if getrawmetatable and hookmetamethod then
                 end
             end
         end
-        return old(self, key)
+        return oldIndex(self, key)
+    end))
+
+    -- Hook 2: __namecall for FireServer/InvokeServer
+    local oldNamecall
+    oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
+        local args = {...}
+        local method = getnamecallmethod()
+
+        if IverHub.Settings.SilentAim and not checkcaller() then
+            if method == "FireServer" or method == "InvokeServer" then
+                local target = getClosestPlayer()
+                if target and target.Character then
+                    local part = target.Character:FindFirstChild(IverHub.Settings.TargetPart) or target.Character:FindFirstChild("HumanoidRootPart")
+                    if part then
+                        local pos = part.Position
+
+                        if IverHub.Settings.PredictMovement then
+                            local velocity = part.AssemblyLinearVelocity or part.Velocity or Vector3.zero
+                            pos = pos + (velocity * IverHub.Settings.PredictionStrength)
+                        end
+
+                        for i, v in pairs(args) do
+                            if typeof(v) == "Vector3" then
+                                args[i] = pos
+                            elseif typeof(v) == "CFrame" then
+                                args[i] = CFrame.new(pos)
+                            elseif typeof(v) == "Instance" and v:IsA("BasePart") then
+                                args[i] = part
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        return oldNamecall(self, unpack(args))
     end))
 end
 
@@ -509,8 +546,8 @@ Players.PlayerRemoving:Connect(function(player)
     end
 end)
 
-print("✅ Iver Hub v6.0 Loaded Successfully!")
+print("✅ Iver Hub v6.1 Loaded Successfully!")
 print("🎮 All features working")
 print("👁️ ESP: Active")
-print("🎯 Silent Aim: Active")
+print("🎯 Silent Aim: Active (Dual Hook)")
 print("🖱️ Drag from title bar to move")
